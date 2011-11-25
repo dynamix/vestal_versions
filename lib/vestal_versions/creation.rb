@@ -21,7 +21,7 @@ module VestalVersions
         self.vestal_versions_options[:only] = Array(options.delete(:only)).map(&:to_s).uniq if options[:only]
         self.vestal_versions_options[:except] = Array(options.delete(:except)).map(&:to_s).uniq if options[:except]
         self.vestal_versions_options[:initial_version] = options.delete(:initial_version)
-        
+
         result
       end
     end
@@ -40,7 +40,7 @@ module VestalVersions
           reset_version_changes
           reset_version
         end
-                
+
         # Returns whether a new version should be created upon updating the parent record.
         def create_version?
           !version_changes.blank?
@@ -86,7 +86,12 @@ module VestalVersions
         # Specifies the attributes used during version creation. This is separated into its own
         # method so that it can be overridden by the VestalVersions::Users feature.
         def version_attributes
-          {:modifications => version_changes, :number => last_version + 1}
+          result = {:modifications => version_changes, :number => last_version + 1}
+          version_changes.keys.select { |k| self.class.column_names.include?("#{k}_from") && self.class.column_names.include?("#{k}_to") }.each do |k|
+            va["#{k}_from"] = version_changes[k][0]
+            va["#{k}_to"]   = version_changes[k][1]
+          end
+          result
         end
     end
   end
